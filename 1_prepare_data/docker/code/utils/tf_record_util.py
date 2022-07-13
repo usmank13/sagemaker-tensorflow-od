@@ -27,8 +27,9 @@ class TfRecordGenerator:
                 writer = tf.io.TFRecordWriter(os.path.join(self.output_dir, f'{subset}.records'))
                 for image_annotations in dataset[subset]:
                     annotation_dict = json.loads(json.dumps(image_annotations))
+                    label_job_name = list(annotation_dict.keys())[1]
                     tf_example = self._create_tf_example(annotation_dict['source-ref'],
-                                                         annotation_dict['bees-500']['annotations'])
+                                                         annotation_dict[label_job_name]['annotations'])
                     writer.write(tf_example.SerializeToString())
                 writer.close()
 
@@ -36,6 +37,7 @@ class TfRecordGenerator:
         image_name = os.path.basename(s3_image_path)
         image_path = f'{self.image_dir}/{image_name}'
         im = Image.open(image_path)
+        im_format = image_name[-3:]
 
         # READ IMAGE FILE
         with tf.io.gfile.GFile(image_path, 'rb') as fid:
@@ -72,9 +74,9 @@ class TfRecordGenerator:
             'image/height': dataset_util.int64_feature(image_height),
             'image/width': dataset_util.int64_feature(image_width),
             'image/filename': dataset_util.bytes_feature(bytes(image_name, 'utf-8')),
-            'image/source_id': dataset_util.bytes_feature(bytes(image_name.replace('.jpg', ''), 'utf-8')),
+            'image/source_id': dataset_util.bytes_feature(bytes(image_name.replace('.png', ''), 'utf-8')),
             'image/encoded': dataset_util.bytes_feature(encoded_jpg),
-            'image/format': dataset_util.bytes_feature('jpeg'.encode('utf8')),
+            'image/format': dataset_util.bytes_feature('png'.encode('utf8')),
             'image/object/bbox/xmin': dataset_util.float_list_feature(xmins),
             'image/object/bbox/xmax': dataset_util.float_list_feature(xmaxs),
             'image/object/bbox/ymin': dataset_util.float_list_feature(ymins),
