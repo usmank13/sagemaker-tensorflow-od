@@ -34,4 +34,5 @@ python exporter_main_v2.py \
     --pipeline_config_path ${PIPELINE_CONFIG_PATH} \
     --output_directory /tmp/exported
     
-mv /tmp/exported/saved_model /opt/ml/model/1
+#mv /tmp/exported/saved_model /opt/ml/model/1
+mv /tmp/exported/ /opt/ml/model/1
