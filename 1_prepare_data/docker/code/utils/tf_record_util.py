@@ -10,13 +10,30 @@ from utils import dataset_util
 from PIL import Image
 import tensorflow as tf
 
+class UniqueId(object):
+  """Class to get the unique {image/ann}_id each time calling the functions."""
+
+  def __init__(self):
+    self.image_id = 0
+    self.ann_id = 0
+
+  def get_image_id(self):
+    self.image_id += 1
+    return self.image_id
+
+  def get_ann_id(self):
+    self.ann_id += 1
+    return self.ann_id
+
 
 class TfRecordGenerator:
-    def __init__(self, image_dir, manifest, label_map, output_dir):
+    def __init__(self, image_dir, manifest, label_map, output_dir, s3_path):
         self.image_dir = image_dir
         self.manifest = manifest
         self.label_map = label_map
         self.output_dir = output_dir
+        self.s3_dir = s3_path
+        self.uniq_id = UniqueId()
 
     def generate_tf_records(self):
         with jsonlines.open(self.manifest, 'r') as reader:
@@ -34,7 +51,11 @@ class TfRecordGenerator:
                 writer.close()
 
     def _create_tf_example(self, s3_image_path, annotations):
-        image_name = os.path.basename(s3_image_path)
+        # image_name = os.path.basename(s3_image_path)
+        image_name = s3_image_path.split(self.s3_dir)[1]
+        if image_name[0] == '/': # to handle a / at the end of the s3_dir
+            image_name = image_name[1:]
+
         image_path = f'{self.image_dir}/{image_name}'
         im = Image.open(image_path)
         im_format = image_name[-3:]
@@ -47,6 +68,9 @@ class TfRecordGenerator:
         encoded_jpg_io.seek(0)
         image = Image.open(encoded_jpg_io)
         image_width, image_height = image.size
+
+        image_id = self.uniq_id.get_image_id()
+
         if image.format != 'JPEG':
             image = image.convert('RGB')
 
@@ -74,7 +98,8 @@ class TfRecordGenerator:
             'image/height': dataset_util.int64_feature(image_height),
             'image/width': dataset_util.int64_feature(image_width),
             'image/filename': dataset_util.bytes_feature(bytes(image_name, 'utf-8')),
-            'image/source_id': dataset_util.bytes_feature(bytes(image_name.replace('.png', ''), 'utf-8')),
+            # 'image/source_id': dataset_util.bytes_feature(bytes(image_name.replace('.png', ''), 'utf-8')),
+            'image/source_id': dataset_util.bytes_feature(str(image_id).encode('utf8')),
             'image/encoded': dataset_util.bytes_feature(encoded_jpg),
             'image/format': dataset_util.bytes_feature('png'.encode('utf8')),
             'image/object/bbox/xmin': dataset_util.float_list_feature(xmins),

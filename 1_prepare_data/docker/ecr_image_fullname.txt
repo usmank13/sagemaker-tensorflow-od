@@ -1,1 +1,1 @@
-.dkr.ecr..amazonaws.com/:20220616144428
+169768674368.dkr.ecr.us-west-2.amazonaws.com/:20220817103012

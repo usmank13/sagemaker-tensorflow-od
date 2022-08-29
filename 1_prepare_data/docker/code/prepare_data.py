@@ -10,18 +10,21 @@ if __name__ == "__main__":
     parser.add_argument("--label_map", type=str, default="")
     parser.add_argument("--ground_truth_manifest", type=str, default="")
     parser.add_argument("--output", type=str, default="")
+    parser.add_argument("--s3_base", type=str, default="")
     args, _ = parser.parse_known_args()
 
     input_folder = args.input
     ground_truth_manifest = args.ground_truth_manifest
     label_map = json.loads(args.label_map)
     output_folder = args.output
+    s3_dir = args.s3_base
 
     # Feed in necessary path variables from above operations
     tf_record_generator = TfRecordGenerator(image_dir=input_folder,
                                             manifest=ground_truth_manifest,
                                             label_map=label_map,
-                                            output_dir=output_folder)
+                                            output_dir=output_folder,
+                                            s3_path=s3_dir)
 
     print('GENERATING TF RECORD FILES')
     tf_record_generator.generate_tf_records()
